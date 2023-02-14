@@ -1,14 +1,30 @@
-# volumes:
+volumes:
+  threadful:
+    external: true
 services:
-  fastapi:
+  postgres:
     build:
-      context: sample_service
-      dockerfile: Dockerfile.dev
-    ports:
-      - 8000:8000
+      context: ./relational-data
+      dockerfile: ./Dockerfile.dev
     volumes:
-      - ./sample_service:/app
-      
+      - threadful:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: threadful
+      POSTGRES_USER: threadful
+      POSTGRES_DB: threadful
+    ports:
+      - 15432:5432
+  api:
+    build:
+      context: ./api
+      dockerfile: ./Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+    environment:
+      DATABASE_URL: postgresql://threadful:threadful@postgres/threadful
+      WAIT_HOSTS: postgres:5432
   ghi:
     image: node:lts-bullseye
     command: /bin/bash run.sh
@@ -22,5 +38,4 @@ services:
       NODE_ENV: development
       HOST: "0.0.0.0"
       PUBLIC_URL: http://localhost:3000
-      REACT_APP_SAMPLE_SERVICE_API_HOST: http://localhost:8000
-            
+      REACT_APP_API_API_HOST: http://localhost:8000
